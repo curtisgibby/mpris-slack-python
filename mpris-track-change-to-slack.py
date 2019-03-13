@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-from ansimarkup import ansiprint
 import calendar
 import datetime
 import dbus
@@ -11,15 +10,117 @@ import random
 import re
 import requests
 import time
+import os
 
-def get_status_emoji(metadata):
+slack_token = 'xoxs-2985676589-2988733898-571622474405-ea253df1662401a78a2c0f0310f0f76a93c9ef39d532a5496c7b2cb34587ede4'
+# slack_token = os.environ["SLACK_API_TOKEN"]
+emoji_name = 'curtis-album-art'
+
+def download(url):
+	print("url") #debug!
+	print(url)
+	get_response = requests.get(url, stream=True)
+	with open(emoji_name, 'wb') as f:
+		for chunk in get_response.iter_content(chunk_size=1024):
+			if chunk: # filter out keep-alive new chunks
+				f.write(chunk)
+		return emoji_name
+	
+	return False
+
+def get_default_status_emoji():
 	return random.choice([
 		':cd:',
 		':headphones:',
 		':musical_note:',
 		':notes:',
 		':radio:',
-	]);
+	])
+
+def get_local_file(art_url):
+	if "file:///" in art_url:
+		return art_url.replace('file://', '')
+	
+	return download(art_url)
+
+def delete_slack_emoji():
+	postBody = {
+		'token': slack_token,
+		'name': emoji_name,
+	}
+	
+	url = 'https://slack.com/api/emoji.remove'
+	r = requests.post(url, data = postBody)
+
+	if(r.ok):
+		parsed = json.loads(r.text)
+		if parsed['ok']:
+			return True
+		else:
+			return False
+	else:
+		r.raise_for_status()
+	
+	return False
+
+def ensure_slack_does_not_have_emoji():
+	url = 'https://slack.com/api/emoji.list'
+	r = requests.get(url, params = {'token': slack_token})
+
+	if(r.ok):
+		parsed = json.loads(r.text)
+		
+		if parsed['ok']:
+			if emoji_name in parsed['emoji']:
+				return delete_slack_emoji()
+			else:
+				return True
+		else:
+			return False
+	else:
+		r.raise_for_status()
+	
+	return False
+
+def upload_file_to_slack(local_file):
+	slack_does_not_have_emoji = ensure_slack_does_not_have_emoji()
+	if not slack_does_not_have_emoji:
+		return False
+	with open(local_file, 'rb') as f:
+		postBody = {
+			'token': slack_token,
+			'mode': 'data',
+			'name': emoji_name,
+			# 'image': f
+		}
+		
+		files = {'image': f}
+
+		url = 'https://slack.com/api/emoji.add'
+		r = requests.post(url, data = postBody, files = files)
+	
+	if(r.ok):
+		parsed = json.loads(r.text)
+		if parsed['ok']:
+			return emoji_name
+		else:
+			return False
+	else:
+		r.raise_for_status()
+	
+	return False
+
+def get_status_emoji(metadata):
+	if (not metadata['mpris:artUrl']) or ("default_album_med" in metadata['mpris:artUrl']):
+		return get_default_status_emoji()
+	
+	local_file = get_local_file(metadata['mpris:artUrl'])
+	
+	if local_file:
+		uploaded_file_to_slack = upload_file_to_slack(local_file)
+		if uploaded_file_to_slack:
+			return ':' + uploaded_file_to_slack + ':'
+	return get_default_status_emoji()
 
 # This gets called whenever the player sends the PropertiesChanged signal
 def playing_song_changed (Player,two,three):
@@ -38,30 +139,30 @@ def playing_song_changed (Player,two,three):
 			length = 180 # 3 minutes
 			
 		expiration_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=length)
+		status_emoji = get_status_emoji(metadata)
 		profile = {
 			'status_text': status_text,
-			'status_emoji': get_status_emoji(metadata),
+			'status_emoji': status_emoji,
 			'status_expiration': calendar.timegm(expiration_time.timetuple()),
 		}
 
-		token = 'xoxp-2985676589-2988733898-571683094245-15016a48f3800b71c3c0a0ef308ca5f3'
 		postBody = {
 			'profile': json.dumps(profile),
-			'token': token,
+			'token': slack_token,
 		}
 
 		url = 'https://slack.com/api/users.profile.set'
 
-		ansiprint('<yellow>Attempting to set status:</yellow> ' + status_text)
+		print('Attempting to set status: ' + status_text)
 
 		r = requests.post(url, data = postBody)
 
 		if(r.ok):
 			parsed = json.loads(r.text)
 			if parsed['ok']:
-				ansiprint('<green>Success</green>')
+				print('Success')
 			else:
-				ansiprint('<red>Error setting status : ' + parsed['error'] + '</red>')
+				print('Error setting status : ' + parsed['error'])
 		else:
 			r.raise_for_status()
 
@@ -74,10 +175,10 @@ def getPlayingPlayer():
 			interface = dbus.Interface(player, 'org.freedesktop.DBus.Properties')
 			playbackStatus = interface.Get('org.mpris.MediaPlayer2.Player', 'PlaybackStatus')
 			if playbackStatus == 'Playing':
-				ansiprint('<yellow>Currently playing:</yellow> ' + interface.Get('org.mpris.MediaPlayer2', 'Identity'))
+				print('Currently playing: ' + interface.Get('org.mpris.MediaPlayer2', 'Identity'))
 				return interface
 				
-				ansiprint('<red>No players playing!</red>')
+				print('No players playing!')
 				quit()
 				
 				interface = getPlayingPlayer()
