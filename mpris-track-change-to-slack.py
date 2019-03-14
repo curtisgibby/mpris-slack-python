@@ -17,8 +17,6 @@ slack_token = 'xoxs-2985676589-2988733898-571622474405-ea253df1662401a78a2c0f031
 emoji_name = 'curtis-album-art'
 
 def download(url):
-	print("url") #debug!
-	print(url)
 	get_response = requests.get(url, stream=True)
 	with open(emoji_name, 'wb') as f:
 		for chunk in get_response.iter_content(chunk_size=1024):
@@ -91,7 +89,6 @@ def upload_file_to_slack(local_file):
 			'token': slack_token,
 			'mode': 'data',
 			'name': emoji_name,
-			# 'image': f
 		}
 		
 		files = {'image': f}
@@ -99,6 +96,9 @@ def upload_file_to_slack(local_file):
 		url = 'https://slack.com/api/emoji.add'
 		r = requests.post(url, data = postBody, files = files)
 	
+	if os.path.exists(local_file):
+		  os.remove(local_file)
+
 	if(r.ok):
 		parsed = json.loads(r.text)
 		if parsed['ok']:
