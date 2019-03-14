@@ -47,8 +47,10 @@ def delete_slack_emoji():
 		'name': emoji_name,
 	}
 	
-	url = 'https://slack.com/api/emoji.remove'
-	r = requests.post(url, data = postBody)
+	r = requests.post(
+		'https://slack.com/api/emoji.remove',
+		data = postBody
+	)
 
 	if(r.ok):
 		parsed = json.loads(r.text)
@@ -62,8 +64,10 @@ def delete_slack_emoji():
 	return False
 
 def ensure_slack_does_not_have_emoji():
-	url = 'https://slack.com/api/emoji.list'
-	r = requests.get(url, params = {'token': slack_token})
+	r = requests.get(
+		'https://slack.com/api/emoji.list',
+		params = {'token': slack_token}
+	)
 
 	if(r.ok):
 		parsed = json.loads(r.text)
@@ -93,8 +97,10 @@ def upload_file_to_slack(local_file):
 		
 		files = {'image': f}
 
-		url = 'https://slack.com/api/emoji.add'
-		r = requests.post(url, data = postBody, files = files)
+		r = requests.post(
+			'https://slack.com/api/emoji.add',
+			data = postBody, files = files
+		)
 	
 	if os.path.exists(local_file):
 		  os.remove(local_file)
@@ -152,11 +158,12 @@ def playing_song_changed (Player,two,three):
 			'token': slack_token,
 		}
 
-		url = 'https://slack.com/api/users.profile.set'
-
 		print('Attempting to set status: ' + status_text)
 
-		r = requests.post(url, data = postBody)
+		r = requests.post(
+			'https://slack.com/api/users.profile.set',
+			data = postBody
+		)
 
 		if(r.ok):
 			parsed = json.loads(r.text)
