@@ -27,6 +27,7 @@ print(metadata) # debug!
 exit() # debug!
 
 status_text = 'Now Playing: ' + ','.join(metadata['xesam:artist']) + ' - ' + metadata['xesam:title']
+status_text = status_text[:97] + ('...' if len(status_text) > 97 else '')
 expiration_time = datetime.datetime.utcnow() + datetime.timedelta(minutes=2)
 profile = {
 	'status_text': status_text,

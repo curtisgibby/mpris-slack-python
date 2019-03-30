@@ -133,6 +133,7 @@ def playing_song_changed (Player,two,three):
 	if track != track2:
 		track = ','.join(metadata['xesam:artist']) + ' - ' + metadata['xesam:title']
 		status_text = 'Now Playing: ' + ','.join(metadata['xesam:artist']) + ' - ' + metadata['xesam:title']
+		status_text = status_text[:97] + ('...' if len(status_text) > 97 else '')
 		try:
 			length = metadata['mpris:length'] / 1000000 # comes in as microseconds
 		except:
