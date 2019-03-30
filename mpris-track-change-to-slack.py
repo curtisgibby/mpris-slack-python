@@ -130,7 +130,11 @@ def get_status_emoji(metadata):
 
 # This gets called whenever the player sends the PropertiesChanged signal
 def playing_song_changed (Player,two,three):
-	time.sleep(3) # to allow enough time to get the correct metadata (specifically length)
+	try:
+		time.sleep(3) # to allow enough time to get the correct metadata (specifically length)
+	except KeyboardInterrupt:
+		pass
+
 	global interface
 	global track
 	metadata = interface.Get('org.mpris.MediaPlayer2.Player', 'Metadata')
@@ -200,5 +204,9 @@ track = ','.join(metadata['xesam:artist']) + ' - ' + metadata['xesam:title']
 interface.connect_to_signal ('PropertiesChanged', playing_song_changed)
 
 # Run the GLib event loop to process DBus signals as they arrive
-mainloop = glib.MainLoop ()
-mainloop.run ()
+try:
+	mainloop = glib.MainLoop()
+	mainloop.run()
+except KeyboardInterrupt:
+	mainloop.quit()
+	pass
