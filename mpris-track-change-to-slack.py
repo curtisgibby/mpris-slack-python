@@ -198,6 +198,9 @@ def getPlayingPlayer():
 dbus.mainloop.glib.DBusGMainLoop (set_as_default = True)
 
 interface = getPlayingPlayer()
+if interface is None:
+	print('No players playing!')
+	quit()
 metadata = interface.Get('org.mpris.MediaPlayer2.Player', 'Metadata')
 track = ','.join(metadata['xesam:artist']) + ' - ' + metadata['xesam:title']
 
