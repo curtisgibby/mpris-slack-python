@@ -113,7 +113,10 @@ def upload_file_to_slack(local_file):
 	return False
 
 def get_status_emoji(metadata):
-	if (not metadata['mpris:artUrl']) or ("default_album_med" in metadata['mpris:artUrl']):
+	try:
+		if (not metadata['mpris:artUrl']) or ("default_album_med" in metadata['mpris:artUrl']):
+			raise Exception
+	except Exception:
 		return get_default_status_emoji()
 	
 	local_file = get_local_file(metadata['mpris:artUrl'])
