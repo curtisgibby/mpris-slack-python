@@ -12,10 +12,6 @@ import requests
 import time
 import os
 
-slack_token = 'xoxs-2985676589-2988733898-571622474405-ea253df1662401a78a2c0f0310f0f76a93c9ef39d532a5496c7b2cb34587ede4'
-# slack_token = os.environ["SLACK_API_TOKEN"]
-emoji_name = 'curtis-album-art'
-
 def download(url):
 	get_response = requests.get(url, stream=True)
 	with open(emoji_name, 'wb') as f:
@@ -189,11 +185,34 @@ def getPlayingPlayer():
 			if playbackStatus == 'Playing':
 				print('Currently playing: ' + interface.Get('org.mpris.MediaPlayer2', 'Identity'))
 				return interface
-				
-				print('No players playing!')
-				quit()
-				
-				interface = getPlayingPlayer()
+
+try:
+	with open("config.json") as config_file:
+		config = json.load(config_file)
+except IOError as error:
+	print('Unable to read `config.json` file')
+	quit();
+
+try:
+	slack_token = config['slack-token']
+except Exception as error:
+	print('Config value `slack-token` not defined in `config.json`')
+	quit();
+
+try:
+	if slack_token == '':
+		raise Exception('empty string')
+	if slack_token == 'YOUR_SLACK_TOKEN' :
+		raise Exception(slack_token)
+except Exception as error:
+	print('Invalid value for `slack-token` in `config.json`: ' + str(error))
+	quit();
+
+
+try:
+	emoji_name = config['emoji-name']
+except Exception as error:
+	emoji_name = 'my-album-art'
 
 dbus.mainloop.glib.DBusGMainLoop (set_as_default = True)
 
