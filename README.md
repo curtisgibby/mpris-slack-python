@@ -8,7 +8,7 @@ I wanted to be able to push my now-listening status (including album art) to my 
 
 ### 1. Create your `config.json` file
 
-```
+```bash
 cp config.default.json config.json
 ```
 
@@ -40,21 +40,22 @@ You need to be playing your media _before_ moving on to step 4.
 
 ### 4. Run the Python script
 
-```
+```bash
 python mpris-track-change-to-slack.py
 ```
 
 The script will let you know which media player it found. For example, I see this when I start Google Play Music:
 
-```
+```plaintext
 Currently playing: Google Play Music Desktop Player
 ```
 
 You can either wait until the current track finishes playing on its own, or if you're feeling impatient, skip to the next track to manually trigger the "track change" functionality. The script will attempt to:
-   - save your album art as a Slack emoji and
-   - set your status to the now-playing text including the artist and title and the album-art emoji
 
-```
+- save your album art as a Slack emoji and
+- set your status to the now-playing text including the artist and title and the album-art emoji
+
+```plaintext
 Attempting to set status: Now Playing: INXS - Devil Inside
 Success
 ```
